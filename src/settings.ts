@@ -1,13 +1,16 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, Modal } from 'obsidian';
 import type QmdPlugin from './main';
 import { OPENAI_MODELS, ANTHROPIC_MODELS, GEMINI_MODELS } from './types/settings';
+import { QmdInstaller, InstallProgress } from './services/QmdInstaller';
 
 export class QmdSettingTab extends PluginSettingTab {
   plugin: QmdPlugin;
+  private installer: QmdInstaller;
 
   constructor(app: App, plugin: QmdPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+    this.installer = new QmdInstaller();
   }
 
   display(): void {
@@ -26,15 +29,38 @@ export class QmdSettingTab extends PluginSettingTab {
   private addQmdSettings(containerEl: HTMLElement): void {
     containerEl.createEl('h3', { text: 'qmd Configuration' });
 
+    const statusEl = containerEl.createDiv('qmd-status');
+    this.updateQmdStatus(statusEl);
+
     new Setting(containerEl)
       .setName('qmd Path')
-      .setDesc('Path to the qmd executable')
+      .setDesc('Path to the qmd executable (auto-detected if empty)')
       .addText(text => text
-        .setPlaceholder('/usr/local/bin/qmd')
+        .setPlaceholder('Auto-detect')
         .setValue(this.plugin.settings.qmdPath)
         .onChange(async (value) => {
           this.plugin.settings.qmdPath = value;
           await this.plugin.saveSettings();
+        }))
+      .addButton(button => button
+        .setButtonText('Auto-detect')
+        .onClick(async () => {
+          button.setButtonText('Searching...');
+          button.setDisabled(true);
+          
+          const path = await this.installer.findQmd();
+          
+          if (path) {
+            this.plugin.settings.qmdPath = path;
+            await this.plugin.saveSettings();
+            new Notice(`Found qmd at: ${path}`);
+            this.display();
+          } else {
+            new Notice('qmd not found. Click "Install qmd" to install.');
+          }
+          
+          button.setButtonText('Auto-detect');
+          button.setDisabled(false);
         }));
 
     new Setting(containerEl)
@@ -56,7 +82,71 @@ export class QmdSettingTab extends PluginSettingTab {
           
           button.setButtonText('Test');
           button.setDisabled(false);
+          this.updateQmdStatus(statusEl);
         }));
+
+    new Setting(containerEl)
+      .setName('Install & Setup qmd')
+      .setDesc('Automatically install qmd, index your vault, and generate embeddings')
+      .addButton(button => button
+        .setButtonText('One-Click Setup')
+        .setCta()
+        .onClick(() => {
+          new SetupModal(this.app, this.plugin, this.installer, () => {
+            this.display();
+          }).open();
+        }));
+
+    new Setting(containerEl)
+      .setName('Index Current Vault')
+      .setDesc('Add this vault to qmd and generate embeddings')
+      .addButton(button => button
+        .setButtonText('Index Vault')
+        .onClick(async () => {
+          const qmdPath = this.plugin.settings.qmdPath || await this.installer.findQmd();
+          if (!qmdPath) {
+            new Notice('qmd not found. Please install qmd first.');
+            return;
+          }
+
+          new IndexModal(this.app, this.plugin, this.installer, qmdPath, () => {
+            this.display();
+          }).open();
+        }));
+  }
+
+  private async updateQmdStatus(statusEl: HTMLElement): Promise<void> {
+    statusEl.empty();
+    
+    const result = await this.plugin.qmdClient.testConnection();
+    
+    if (result.ok && result.status) {
+      statusEl.addClass('qmd-status-ok');
+      statusEl.removeClass('qmd-status-error');
+      statusEl.innerHTML = `
+        <div class="qmd-status-badge">
+          <span class="qmd-status-icon">✓</span>
+          <span>Connected</span>
+        </div>
+        <div class="qmd-status-info">
+          ${result.status.totalDocuments} documents | 
+          ${result.status.totalEmbeddings} embeddings | 
+          ${result.status.collections.length} collections
+        </div>
+      `;
+    } else {
+      statusEl.addClass('qmd-status-error');
+      statusEl.removeClass('qmd-status-ok');
+      statusEl.innerHTML = `
+        <div class="qmd-status-badge">
+          <span class="qmd-status-icon">✗</span>
+          <span>Not Connected</span>
+        </div>
+        <div class="qmd-status-info">
+          Click "One-Click Setup" to install and configure qmd
+        </div>
+      `;
+    }
   }
 
   private addSearchSettings(containerEl: HTMLElement): void {
@@ -372,5 +462,181 @@ export class QmdSettingTab extends PluginSettingTab {
           this.plugin.settings.ragSystemPrompt = value;
           await this.plugin.saveSettings();
         }));
+  }
+}
+
+class SetupModal extends Modal {
+  private plugin: QmdPlugin;
+  private installer: QmdInstaller;
+  private onComplete: () => void;
+  private progressEl: HTMLElement | null = null;
+  private isRunning = false;
+
+  constructor(app: App, plugin: QmdPlugin, installer: QmdInstaller, onComplete: () => void) {
+    super(app);
+    this.plugin = plugin;
+    this.installer = installer;
+    this.onComplete = onComplete;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass('qmd-setup-modal');
+
+    contentEl.createEl('h2', { text: 'QMD One-Click Setup' });
+    
+    contentEl.createEl('p', { 
+      text: 'This will install qmd, index your current vault, and generate embeddings for semantic search.'
+    });
+
+    const warningEl = contentEl.createDiv('qmd-setup-warning');
+    warningEl.innerHTML = `
+      <strong>Note:</strong> This process may take several minutes depending on your vault size.
+      <ul>
+        <li>Installing qmd (~250MB of models will be downloaded)</li>
+        <li>Indexing all markdown files in your vault</li>
+        <li>Generating vector embeddings</li>
+      </ul>
+    `;
+
+    this.progressEl = contentEl.createDiv('qmd-setup-progress');
+    this.progressEl.style.display = 'none';
+
+    const buttonContainer = contentEl.createDiv('qmd-setup-buttons');
+    
+    const startButton = buttonContainer.createEl('button', { text: 'Start Setup', cls: 'mod-cta' });
+    startButton.addEventListener('click', () => this.runSetup(startButton));
+
+    const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+    cancelButton.addEventListener('click', () => this.close());
+  }
+
+  private async runSetup(button: HTMLButtonElement) {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    button.disabled = true;
+    button.textContent = 'Setting up...';
+
+    if (this.progressEl) {
+      this.progressEl.style.display = 'block';
+    }
+
+    const vaultPath = (this.app.vault.adapter as any).basePath;
+    const vaultName = this.app.vault.getName();
+
+    try {
+      const qmdPath = await this.installer.fullSetup(
+        vaultPath,
+        vaultName,
+        (progress) => this.updateProgress(progress)
+      );
+
+      this.plugin.settings.qmdPath = qmdPath;
+      await this.plugin.saveSettings();
+
+      new Notice('QMD setup complete! You can now search your vault.');
+      this.onComplete();
+      this.close();
+
+    } catch (e) {
+      new Notice(`Setup failed: ${e instanceof Error ? e.message : String(e)}`);
+      button.disabled = false;
+      button.textContent = 'Retry Setup';
+      this.isRunning = false;
+    }
+  }
+
+  private updateProgress(progress: InstallProgress) {
+    if (!this.progressEl) return;
+
+    const stageIcons: Record<string, string> = {
+      checking: '🔍',
+      installing: '📦',
+      indexing: '📚',
+      embedding: '🧠',
+      complete: '✅',
+      error: '❌',
+    };
+
+    this.progressEl.innerHTML = `
+      <div class="qmd-progress-stage">
+        <span class="qmd-progress-icon">${stageIcons[progress.stage]}</span>
+        <span class="qmd-progress-message">${progress.message}</span>
+      </div>
+      ${progress.progress !== undefined ? `
+        <div class="qmd-progress-bar">
+          <div class="qmd-progress-fill" style="width: ${progress.progress}%"></div>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  onClose() {
+    this.contentEl.empty();
+  }
+}
+
+class IndexModal extends Modal {
+  private plugin: QmdPlugin;
+  private installer: QmdInstaller;
+  private qmdPath: string;
+  private onComplete: () => void;
+  private progressEl: HTMLElement | null = null;
+
+  constructor(app: App, plugin: QmdPlugin, installer: QmdInstaller, qmdPath: string, onComplete: () => void) {
+    super(app);
+    this.plugin = plugin;
+    this.installer = installer;
+    this.qmdPath = qmdPath;
+    this.onComplete = onComplete;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    
+    contentEl.createEl('h2', { text: 'Index Vault' });
+
+    const vaultPath = (this.app.vault.adapter as any).basePath;
+    const vaultName = this.app.vault.getName();
+
+    contentEl.createEl('p', { 
+      text: `This will index "${vaultName}" and generate embeddings.`
+    });
+
+    this.progressEl = contentEl.createDiv('qmd-setup-progress');
+
+    const buttonContainer = contentEl.createDiv('qmd-setup-buttons');
+    
+    const startButton = buttonContainer.createEl('button', { text: 'Start Indexing', cls: 'mod-cta' });
+    startButton.addEventListener('click', async () => {
+      startButton.disabled = true;
+      startButton.textContent = 'Indexing...';
+
+      try {
+        await this.installer.indexVault(this.qmdPath, vaultPath, vaultName, (p) => {
+          if (this.progressEl) this.progressEl.textContent = p.message;
+        });
+
+        await this.installer.generateEmbeddings(this.qmdPath, (p) => {
+          if (this.progressEl) this.progressEl.textContent = p.message;
+        });
+
+        new Notice('Indexing complete!');
+        this.onComplete();
+        this.close();
+
+      } catch (e) {
+        new Notice(`Indexing failed: ${e instanceof Error ? e.message : String(e)}`);
+        startButton.disabled = false;
+        startButton.textContent = 'Retry';
+      }
+    });
+
+    const cancelButton = buttonContainer.createEl('button', { text: 'Cancel' });
+    cancelButton.addEventListener('click', () => this.close());
+  }
+
+  onClose() {
+    this.contentEl.empty();
   }
 }
