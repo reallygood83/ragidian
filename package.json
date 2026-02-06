@@ -1,0 +1,27 @@
+{
+	"name": "qmd-ragidian",
+	"version": "0.1.0",
+	"description": "Hybrid search & RAG for Obsidian powered by qmd",
+	"main": "main.js",
+	"type": "module",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"lint": "eslint src/"
+	},
+	"keywords": [
+		"obsidian",
+		"search",
+		"rag",
+		"qmd",
+		"semantic-search"
+	],
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.0.0",
+		"esbuild": "^0.25.0",
+		"obsidian": "latest",
+		"tslib": "^2.6.0",
+		"typescript": "^5.3.0"
+	}
+}

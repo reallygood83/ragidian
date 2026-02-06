@@ -1,0 +1,392 @@
+.qmd-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.qmd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qmd-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.qmd-settings-btn {
+  padding: 4px;
+}
+
+.qmd-search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qmd-input-wrapper {
+  display: flex;
+  gap: 4px;
+}
+
+.qmd-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  font-size: 14px;
+}
+
+.qmd-search-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.qmd-search-btn {
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.qmd-mode-selector {
+  display: flex;
+  gap: 4px;
+}
+
+.qmd-mode-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qmd-mode-btn:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qmd-mode-btn.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.qmd-collection-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.qmd-collection-label {
+  color: var(--text-muted);
+}
+
+.qmd-collection-select {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  font-size: 12px;
+}
+
+.qmd-results-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
+.qmd-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qmd-results-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.qmd-refresh-btn {
+  padding: 4px;
+}
+
+.qmd-results-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.qmd-results-empty,
+.qmd-related-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+.qmd-results-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.qmd-result-card {
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.qmd-result-card:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qmd-result-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.qmd-result-icon {
+  color: var(--text-muted);
+}
+
+.qmd-result-title {
+  flex: 1;
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qmd-result-score {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.qmd-score-high {
+  background: rgba(0, 200, 83, 0.15);
+  color: var(--text-success);
+}
+
+.qmd-score-medium {
+  background: rgba(255, 193, 7, 0.15);
+  color: var(--text-warning);
+}
+
+.qmd-score-low {
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.qmd-result-snippet {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.qmd-result-context {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.qmd-loading {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.qmd-loading-text {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.qmd-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: var(--text-error);
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 6px;
+}
+
+.qmd-chat-panel,
+.qmd-related-panel {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+}
+
+.qmd-chat-panel.collapsed .qmd-chat-messages,
+.qmd-chat-panel.collapsed .qmd-chat-input-wrapper,
+.qmd-related-panel.collapsed .qmd-related-list {
+  display: none;
+}
+
+.qmd-chat-header,
+.qmd-related-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  cursor: pointer;
+}
+
+.qmd-chat-title,
+.qmd-related-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.qmd-collapse-btn {
+  padding: 2px;
+}
+
+.qmd-chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.qmd-chat-message {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+}
+
+.qmd-chat-user {
+  background: var(--background-secondary);
+}
+
+.qmd-chat-assistant {
+  background: var(--background-primary-alt);
+}
+
+.qmd-chat-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.qmd-chat-content {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.qmd-chat-thinking {
+  opacity: 0.7;
+}
+
+.qmd-chat-sources {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.qmd-chat-sources-label {
+  font-weight: 500;
+}
+
+.qmd-chat-source-link {
+  margin-left: 4px;
+  color: var(--text-accent);
+  cursor: pointer;
+}
+
+.qmd-chat-source-link:hover {
+  text-decoration: underline;
+}
+
+.qmd-chat-input-wrapper {
+  display: flex;
+  gap: 4px;
+}
+
+.qmd-chat-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  font-size: 13px;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+}
+
+.qmd-chat-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.qmd-chat-send {
+  padding: 8px;
+  border-radius: 6px;
+  align-self: flex-end;
+}
+
+.qmd-related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qmd-related-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.qmd-related-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.qmd-related-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qmd-related-score {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.qmd-related-loading,
+.qmd-related-error {
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 8px;
+  text-align: center;
+}
