@@ -1,5 +1,10 @@
+export type SyncMode = 'off' | 'on-save' | 'on-startup' | 'scheduled';
+
 export interface QmdSettings {
   qmdPath: string;
+
+  syncMode: SyncMode;
+  syncIntervalMinutes: number;
 
   defaultSearchMode: 'search' | 'vsearch' | 'query';
   defaultLimit: number;
@@ -35,7 +40,10 @@ export interface QmdSettings {
 }
 
 export const DEFAULT_SETTINGS: QmdSettings = {
-  qmdPath: '/usr/local/bin/qmd',
+  qmdPath: '',
+
+  syncMode: 'on-startup',
+  syncIntervalMinutes: 10,
 
   defaultSearchMode: 'query',
   defaultLimit: 10,

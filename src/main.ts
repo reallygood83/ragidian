@@ -2,6 +2,7 @@ import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { QmdClient } from './services/QmdClient';
 import { CacheService } from './services/CacheService';
 import { createLLMProvider, LLMProvider } from './services/LLMService';
+import { AutoSyncService } from './services/AutoSyncService';
 import { QmdSidebarView, VIEW_TYPE_QMD } from './views/QmdSidebarView';
 import { QmdSettingTab } from './settings';
 import { QmdSettings, DEFAULT_SETTINGS } from './types/settings';
@@ -13,6 +14,7 @@ export default class QmdPlugin extends Plugin {
   qmdClient: QmdClient;
   llmProvider: LLMProvider | null = null;
   relatedCache: CacheService<QmdSearchResult>;
+  autoSync: AutoSyncService;
   
   private debouncedUpdateRelated: (file: TFile) => void;
 
@@ -22,6 +24,13 @@ export default class QmdPlugin extends Plugin {
     this.qmdClient = new QmdClient(this.settings.qmdPath);
     this.llmProvider = createLLMProvider(this.settings);
     this.relatedCache = new CacheService(this.settings.relatedCacheTTL * 60 * 1000);
+
+    this.autoSync = new AutoSyncService(
+      this.app,
+      this.settings.qmdPath,
+      this.settings.syncMode,
+      this.settings.syncIntervalMinutes
+    );
 
     this.debouncedUpdateRelated = debounce(
       (file: TFile) => this.updateRelatedForFile(file),
@@ -59,7 +68,26 @@ export default class QmdPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: 'sync-now',
+      name: 'Sync Index Now',
+      callback: () => this.autoSync.manualSync(),
+    });
+
     this.addSettingTab(new QmdSettingTab(this.app, this));
+
+    this.registerEvent(
+      this.app.vault.on('modify', (file) => this.autoSync.onFileChange(file))
+    );
+    this.registerEvent(
+      this.app.vault.on('create', (file) => this.autoSync.onFileChange(file))
+    );
+    this.registerEvent(
+      this.app.vault.on('delete', (file) => this.autoSync.onFileDelete(file))
+    );
+    this.registerEvent(
+      this.app.vault.on('rename', (file) => this.autoSync.onFileChange(file))
+    );
 
     if (this.settings.enableRelated) {
       this.registerEvent(
@@ -79,9 +107,12 @@ export default class QmdPlugin extends Plugin {
         })
       );
     }
+
+    this.autoSync.start();
   }
 
   async onunload(): Promise<void> {
+    this.autoSync.destroy();
     this.relatedCache.destroy();
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_QMD);
   }
@@ -95,6 +126,10 @@ export default class QmdPlugin extends Plugin {
     this.qmdClient.setPath(this.settings.qmdPath);
     this.llmProvider = createLLMProvider(this.settings);
     this.relatedCache = new CacheService(this.settings.relatedCacheTTL * 60 * 1000);
+    
+    this.autoSync.setQmdPath(this.settings.qmdPath);
+    this.autoSync.setMode(this.settings.syncMode);
+    this.autoSync.setInterval(this.settings.syncIntervalMinutes);
   }
 
   async activateView(): Promise<void> {

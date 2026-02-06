@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice, Modal } from 'obsidian';
 import type QmdPlugin from './main';
-import { OPENAI_MODELS, ANTHROPIC_MODELS, GEMINI_MODELS } from './types/settings';
+import { OPENAI_MODELS, ANTHROPIC_MODELS, GEMINI_MODELS, SyncMode } from './types/settings';
 import { QmdInstaller, InstallProgress } from './services/QmdInstaller';
 
 export class QmdSettingTab extends PluginSettingTab {
@@ -20,6 +20,7 @@ export class QmdSettingTab extends PluginSettingTab {
     containerEl.createEl('h2', { text: 'QMD RAGidian Settings' });
 
     this.addQmdSettings(containerEl);
+    this.addSyncSettings(containerEl);
     this.addSearchSettings(containerEl);
     this.addRelatedSettings(containerEl);
     this.addLLMSettings(containerEl);
@@ -147,6 +148,64 @@ export class QmdSettingTab extends PluginSettingTab {
         </div>
       `;
     }
+  }
+
+  private addSyncSettings(containerEl: HTMLElement): void {
+    containerEl.createEl('h3', { text: 'Auto Sync' });
+
+    const syncStatus = this.plugin.autoSync.getStatus();
+    const statusEl = containerEl.createDiv('qmd-sync-status');
+    
+    if (syncStatus.lastSync) {
+      statusEl.innerHTML = `<span class="qmd-sync-time">Last sync: ${syncStatus.lastSync.toLocaleTimeString()}</span>`;
+    } else {
+      statusEl.innerHTML = `<span class="qmd-sync-time">Never synced</span>`;
+    }
+
+    new Setting(containerEl)
+      .setName('Sync Mode')
+      .setDesc('When to automatically update the search index')
+      .addDropdown(dropdown => dropdown
+        .addOption('off', 'Off (Manual only)')
+        .addOption('on-save', 'On File Save')
+        .addOption('on-startup', 'On Obsidian Startup')
+        .addOption('scheduled', 'Scheduled Interval')
+        .setValue(this.plugin.settings.syncMode)
+        .onChange(async (value: SyncMode) => {
+          this.plugin.settings.syncMode = value;
+          await this.plugin.saveSettings();
+          this.display();
+        }));
+
+    if (this.plugin.settings.syncMode === 'scheduled') {
+      new Setting(containerEl)
+        .setName('Sync Interval (minutes)')
+        .setDesc('How often to sync in the background')
+        .addSlider(slider => slider
+          .setLimits(5, 60, 5)
+          .setValue(this.plugin.settings.syncIntervalMinutes)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.settings.syncIntervalMinutes = value;
+            await this.plugin.saveSettings();
+          }));
+    }
+
+    new Setting(containerEl)
+      .setName('Sync Now')
+      .setDesc('Manually update index and generate new embeddings')
+      .addButton(button => button
+        .setButtonText('Sync Now')
+        .onClick(async () => {
+          button.setButtonText('Syncing...');
+          button.setDisabled(true);
+          
+          await this.plugin.autoSync.manualSync();
+          
+          button.setButtonText('Sync Now');
+          button.setDisabled(false);
+          this.display();
+        }));
   }
 
   private addSearchSettings(containerEl: HTMLElement): void {

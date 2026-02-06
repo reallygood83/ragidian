@@ -507,3 +507,15 @@
 .qmd-setup-buttons button {
   padding: 8px 16px;
 }
+
+.qmd-sync-status {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.qmd-sync-time {
+  color: var(--text-muted);
+}
