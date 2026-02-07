@@ -2,45 +2,37 @@
 
 Hybrid search & RAG for Obsidian powered by [qmd](https://github.com/tobi/qmd).
 
-Combines **BM25 keyword search**, **vector semantic search**, and **LLM reranking** - all running locally.
+Combines **BM25 keyword search**, **vector semantic search**, and **LLM reranking** - all running **100% locally** on your machine.
 
-![Version](https://img.shields.io/badge/version-0.3.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.3-blue)
 ![Obsidian](https://img.shields.io/badge/Obsidian-1.4%2B-purple)
 
-## Features
+## Key Benefits
 
-### 🔍 Hybrid Search
-- **Keyword Search**: Fast BM25 full-text search
-- **Semantic Search**: Vector similarity search using embeddings
-- **Hybrid Search**: Best quality with BM25 + vector + LLM reranking
+- **Privacy First**: All search operations run locally. Your notes never leave your machine.
+- **Works Offline**: After initial setup, search works without internet connection.
+- **Smart Search**: Combines keyword matching + semantic understanding + AI reranking.
 
-### 💬 RAG Chat
-- Ask questions about your notes in natural language
-- Get AI-powered answers with source citations
-- Click citations to jump directly to the source note
+## Prerequisites
 
-### 📄 Related Documents
-- Automatically suggests related documents when viewing a note
-- Uses semantic similarity to find connections you might miss
+Before installing this plugin, you need [Bun](https://bun.sh) (a fast JavaScript runtime):
 
-### 🤖 Multiple LLM Providers
-- **OpenAI**: GPT-5.2, GPT-5.1, GPT-4o
-- **Anthropic**: Claude Opus 4.6, Sonnet 4.5, Haiku 4.5
-- **Google Gemini**: Gemini 2.5 Flash, 2.5 Pro, 3 Flash Preview
-- **Ollama**: Any local model (llama3.2, mistral, etc.)
-- **Custom Models**: Manually specify any model name
+### Install Bun (macOS/Linux)
 
-### ⚡ One-Click Setup (v0.2.0+)
-- Automatic qmd installation via Bun
-- One-click vault indexing
-- Automatic embedding generation
-- No terminal commands required!
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
 
-### 🔄 Auto-Sync (v0.3.0+)
-- **On-Save Sync**: Automatically re-index when you save a file
-- **Startup Sync**: Check for changes when Obsidian starts
-- **Scheduled Sync**: Periodic background sync (configurable interval)
-- **Smart Debouncing**: Batches rapid changes to avoid excessive indexing
+### Install Bun (Windows)
+
+```powershell
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+After installation, restart your terminal and verify:
+```bash
+bun --version
+```
 
 ## Installation
 
@@ -63,10 +55,6 @@ Combines **BM25 keyword search**, **vector semantic search**, and **LLM rerankin
    - Go to Settings → Community Plugins
    - Find "QMD RAGidian" and enable it
 
-4. **Update via BRAT**:
-   - BRAT will notify you when updates are available
-   - Or manually: Settings → BRAT → "Check for updates"
-
 ### Manual Installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/reallygood83/ragidian/releases)
@@ -76,133 +64,155 @@ Combines **BM25 keyword search**, **vector semantic search**, and **LLM rerankin
 
 ## Quick Start
 
-### Option 1: One-Click Setup (Recommended)
+### One-Click Setup (Recommended)
 
 1. Open Obsidian Settings → QMD RAGidian
-2. Click **"Install qmd"** button (requires [Bun](https://bun.sh) installed)
-3. Wait for installation to complete
-4. Click **"Index Vault"** to index your notes
-5. Click **"Generate Embeddings"** for semantic search
-6. Done! Start searching.
+2. Click **"One-Click Setup"** button
+3. Wait for setup to complete (see below for what happens)
+4. Done! Start searching via the magnifying glass icon in the sidebar.
 
-### Option 2: Manual Setup
+#### What happens during setup?
+
+| Step | Description | Download Size | Time |
+|------|-------------|---------------|------|
+| 1. Install qmd | Downloads qmd CLI tool | ~5 MB | ~30 sec |
+| 2. Index Vault | Scans all markdown files | - | ~1 min |
+| 3. Download Models | AI models from HuggingFace | ~1.6 GB | 5-15 min* |
+| 4. Generate Embeddings | Creates vector index | - | 1-5 min** |
+
+*Depends on internet speed. **Depends on vault size.
+
+**Total first-time setup: ~10-20 minutes** (mostly model download)
+
+After setup, everything runs locally - no internet needed for search!
+
+### Manual Setup (Advanced)
 
 ```bash
 # Install qmd globally
 bun install -g https://github.com/tobi/qmd
 
 # Add your vault as a collection
-qmd collection add ~/path/to/your/vault --name vault
+qmd collection add ~/path/to/your/vault --name MyVault
 
 # Generate embeddings for semantic search
 qmd embed
 ```
 
-Then configure the qmd path in plugin settings.
+Then set the qmd path in plugin settings (usually `~/.bun/bin/qmd`).
+
+## Features
+
+### Search Modes
+- **Keyword (BM25)**: Fast exact/fuzzy text matching
+- **Semantic**: Find conceptually similar content
+- **Hybrid**: Best of both + AI reranking (recommended)
+
+### RAG Chat (Optional)
+Ask questions about your notes using AI:
+- Requires API key from OpenAI, Anthropic, Google, or local Ollama
+- Your notes are used as context (sent to API provider)
+
+### Related Documents
+- Automatically shows related notes when viewing a file
+- Uses semantic similarity to find connections
+
+### Auto-Sync
+- **On Startup**: Check for changes when Obsidian starts
+- **On Save**: Re-index modified files automatically
+- **Scheduled**: Periodic background sync
 
 ## Configuration
 
 ### qmd Settings
 | Setting | Description | Default |
 |---------|-------------|---------|
-| qmd Path | Path to qmd executable | `/usr/local/bin/qmd` |
-| Collection | qmd collection name | `vault` |
-| Result Limit | Max search results | `10` |
+| qmd Path | Path to qmd executable | Auto-detected |
+| Default Search Mode | Initial search mode | Hybrid |
+| Result Limit | Max search results | 10 |
 
-### Auto-Sync Settings (v0.3.0+)
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Auto-sync on save | Re-index when files are saved | `true` |
-| Sync on startup | Check for changes at startup | `true` |
-| Scheduled sync | Enable periodic background sync | `false` |
-| Sync interval | Minutes between scheduled syncs | `30` |
-| Debounce delay | Seconds to wait before syncing | `5` |
-
-### LLM Settings
-Configure your preferred LLM provider for RAG chat:
-- Enter your API key (stored locally, never transmitted except to the provider)
-- Select a model or use custom model name
-- For Ollama, just specify the model name (no API key needed)
-
-## Usage
-
-### Search
-1. Click the magnifying glass icon in the left ribbon
-2. Enter your search query
-3. Select search mode (Keyword / Semantic / Hybrid)
-4. Click a result to open the note
-
-### RAG Chat
-1. Configure an LLM provider in settings
-2. Switch to the Chat tab
-3. Ask a question about your notes
-4. View the AI response with clickable source citations
-
-### Related Documents
-- Open any note
-- Switch to the "Related" tab in the sidebar
-- See semantically similar documents
-
-## Keyboard Shortcuts
-
-Assign shortcuts in Settings → Hotkeys:
-- **Open QMD Search**: Open the search sidebar
-- **Search Selection**: Search for selected text
+### LLM Settings (for RAG Chat)
+| Provider | API Key Required | Notes |
+|----------|-----------------|-------|
+| OpenAI | Yes | GPT-4o, GPT-5.x |
+| Anthropic | Yes | Claude 4.x |
+| Google Gemini | Yes | Gemini 2.5/3 |
+| Ollama | No | Local models, must run `ollama serve` |
 
 ## Troubleshooting
 
-### "qmd not found"
-1. Check if qmd is installed: `which qmd` in terminal
-2. Update the qmd path in settings (e.g., `~/.bun/bin/qmd`)
-3. Click "Test" to verify connection
+### "Not Connected" in settings
+
+**Cause**: Plugin can't communicate with qmd CLI.
+
+**Solutions**:
+1. Click **"Auto-detect"** to find qmd path
+2. If not found, click **"One-Click Setup"** to install
+3. Check if Bun is installed: `bun --version` in terminal
+4. Manual path: usually `~/.bun/bin/qmd`
+
+### "qmd not found" or "No package manager found"
+
+**Cause**: Bun (or npm) is not installed.
+
+**Solution**: Install Bun first:
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+Then restart Obsidian and try again.
+
+### Setup seems stuck / taking too long
+
+**Cause**: Downloading ~1.6GB of AI models.
+
+**Solutions**:
+1. Wait - first setup takes 10-20 minutes
+2. Check internet connection
+3. Check `~/.cache/qmd/models/` folder for download progress
 
 ### "No results found"
-1. Check vault is indexed: `qmd status` in terminal
-2. If not indexed, use "Index Vault" button in settings
-3. For semantic search, ensure embeddings are generated
 
-### LLM errors
-1. Verify your API key is correct
-2. Check internet connection
-3. For Ollama: ensure server is running (`ollama serve`)
+**Causes & Solutions**:
+1. Vault not indexed → Click "Index Vault" in settings
+2. Embeddings not generated → Click "Sync Now" in settings
+3. Query too specific → Try broader search terms
 
-### Auto-sync not working
-1. Check that auto-sync is enabled in settings
-2. Verify qmd path is correct
-3. Check the console for error messages (Ctrl/Cmd + Shift + I)
+### Search is slow
+
+**Cause**: First search after restart loads AI models into memory.
+
+**Solution**: First search takes 5-10 seconds. Subsequent searches are instant.
+
+## Storage Usage
+
+| Component | Location | Size |
+|-----------|----------|------|
+| AI Models | `~/.cache/qmd/models/` | ~1.6 GB |
+| Search Index | `~/.cache/qmd/index.sqlite` | Varies (50-200 MB) |
 
 ## Changelog
 
+### v0.3.3
+- Fix: Connection status now correctly detects working qmd installation
+
 ### v0.3.0
-- ✨ **Auto-Sync**: Automatic re-indexing on file save, startup, and scheduled intervals
-- 🔧 Smart debouncing to batch rapid changes
-- 📊 Sync status display in settings
+- Auto-Sync: Automatic re-indexing on file save, startup, and scheduled intervals
+- Smart debouncing to batch rapid changes
 
 ### v0.2.0
-- ✨ **One-Click Setup**: Install qmd, index vault, generate embeddings from settings
-- 🎨 Improved settings UI
+- One-Click Setup: Install qmd, index vault, generate embeddings from settings
 
 ### v0.1.0
-- 🎉 Initial release
-- Hybrid search (keyword, semantic, hybrid with reranking)
-- RAG chat with multiple LLM providers
-- Related documents feature
+- Initial release with hybrid search, RAG chat, related documents
 
 ## Development
 
 ```bash
-# Clone the repo
 git clone https://github.com/reallygood83/ragidian.git
 cd ragidian
-
-# Install dependencies
 npm install
-
-# Development build (watch mode)
-npm run dev
-
-# Production build
-npm run build
+npm run dev   # Development build (watch mode)
+npm run build # Production build
 ```
 
 ## License
