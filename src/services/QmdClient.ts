@@ -219,7 +219,7 @@ export class QmdClient {
         `${this.qmdPath} ${args}`,
         { 
           maxBuffer: 10 * 1024 * 1024,
-          timeout: 30000 // 30 seconds timeout
+          timeout: 300000
         }
       );
 
