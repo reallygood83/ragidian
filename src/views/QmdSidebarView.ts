@@ -416,9 +416,9 @@ export class QmdSidebarView extends ItemView {
     this.addChatMessage({ role: 'assistant', content: 'Thinking...' });
 
     try {
-      const searchResult = await this.plugin.qmdClient.query(question, {
+      const searchResult = await this.plugin.qmdClient.vsearch(question, {
         limit: this.plugin.settings.ragContextLimit,
-        minScore: 0.2,
+        minScore: 0.3,
       });
 
       const context = searchResult.results
