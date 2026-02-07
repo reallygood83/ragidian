@@ -4,32 +4,68 @@ Hybrid search & RAG for Obsidian powered by [qmd](https://github.com/tobi/qmd).
 
 Combines **BM25 keyword search**, **vector semantic search**, and **LLM reranking** - all running locally.
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.3.0-blue)
 ![Obsidian](https://img.shields.io/badge/Obsidian-1.4%2B-purple)
 
 ## Features
 
-- **Hybrid Search**: Keyword, semantic, and hybrid (with reranking) search modes
-- **RAG Chat**: Ask questions about your notes, get AI-powered answers with citations
-- **Related Documents**: Automatically suggests related documents when viewing a note
-- **Multiple LLM Providers**: OpenAI, Anthropic, Google Gemini, and Ollama (local)
-- **Custom Models**: Manually specify any model name for future-proofing
+### 🔍 Hybrid Search
+- **Keyword Search**: Fast BM25 full-text search
+- **Semantic Search**: Vector similarity search using embeddings
+- **Hybrid Search**: Best quality with BM25 + vector + LLM reranking
 
-## Requirements
+### 💬 RAG Chat
+- Ask questions about your notes in natural language
+- Get AI-powered answers with source citations
+- Click citations to jump directly to the source note
 
-- [qmd](https://github.com/tobi/qmd) installed and configured
-- At least one collection indexed in qmd
-- Embeddings generated (`qmd embed`)
+### 📄 Related Documents
+- Automatically suggests related documents when viewing a note
+- Uses semantic similarity to find connections you might miss
+
+### 🤖 Multiple LLM Providers
+- **OpenAI**: GPT-5.2, GPT-5.1, GPT-4o
+- **Anthropic**: Claude Opus 4.6, Sonnet 4.5, Haiku 4.5
+- **Google Gemini**: Gemini 2.5 Flash, 2.5 Pro, 3 Flash Preview
+- **Ollama**: Any local model (llama3.2, mistral, etc.)
+- **Custom Models**: Manually specify any model name
+
+### ⚡ One-Click Setup (v0.2.0+)
+- Automatic qmd installation via Bun
+- One-click vault indexing
+- Automatic embedding generation
+- No terminal commands required!
+
+### 🔄 Auto-Sync (v0.3.0+)
+- **On-Save Sync**: Automatically re-index when you save a file
+- **Startup Sync**: Check for changes when Obsidian starts
+- **Scheduled Sync**: Periodic background sync (configurable interval)
+- **Smart Debouncing**: Batches rapid changes to avoid excessive indexing
 
 ## Installation
 
 ### Via BRAT (Recommended)
 
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin
-2. Open BRAT settings
-3. Click "Add Beta plugin"
-4. Enter: `reallygood83/ragidian`
-5. Enable the plugin
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) allows you to install beta plugins directly from GitHub.
+
+1. **Install BRAT** (if not already installed):
+   - Open Obsidian Settings → Community Plugins → Browse
+   - Search for "BRAT" and install it
+   - Enable BRAT in your Community Plugins list
+
+2. **Add QMD RAGidian**:
+   - Open Obsidian Settings → BRAT
+   - Click **"Add Beta plugin"**
+   - Enter: `reallygood83/ragidian`
+   - Click "Add Plugin"
+
+3. **Enable the Plugin**:
+   - Go to Settings → Community Plugins
+   - Find "QMD RAGidian" and enable it
+
+4. **Update via BRAT**:
+   - BRAT will notify you when updates are available
+   - Or manually: Settings → BRAT → "Check for updates"
 
 ### Manual Installation
 
@@ -38,110 +74,128 @@ Combines **BM25 keyword search**, **vector semantic search**, and **LLM rerankin
 3. Copy the downloaded files into the folder
 4. Reload Obsidian and enable the plugin
 
-## Setup
+## Quick Start
 
-### 1. Install qmd
+### Option 1: One-Click Setup (Recommended)
+
+1. Open Obsidian Settings → QMD RAGidian
+2. Click **"Install qmd"** button (requires [Bun](https://bun.sh) installed)
+3. Wait for installation to complete
+4. Click **"Index Vault"** to index your notes
+5. Click **"Generate Embeddings"** for semantic search
+6. Done! Start searching.
+
+### Option 2: Manual Setup
 
 ```bash
+# Install qmd globally
 bun install -g https://github.com/tobi/qmd
-```
 
-### 2. Index Your Vault
-
-```bash
 # Add your vault as a collection
 qmd collection add ~/path/to/your/vault --name vault
 
-# Generate embeddings
+# Generate embeddings for semantic search
 qmd embed
 ```
 
-### 3. Configure the Plugin
+Then configure the qmd path in plugin settings.
 
-1. Open Obsidian Settings > QMD RAGidian
-2. Set the qmd path (default: `/usr/local/bin/qmd`)
-3. Click "Test" to verify connection
-4. (Optional) Configure LLM provider for RAG chat
+## Configuration
 
-## LLM Providers
+### qmd Settings
+| Setting | Description | Default |
+|---------|-------------|---------|
+| qmd Path | Path to qmd executable | `/usr/local/bin/qmd` |
+| Collection | qmd collection name | `vault` |
+| Result Limit | Max search results | `10` |
 
-| Provider | Models (Feb 2026) |
-|----------|-------------------|
-| **OpenAI** | GPT-5.2 (default), GPT-5.1, GPT-4o |
-| **Anthropic** | Claude Opus 4.6 (default), Sonnet 4.5, Haiku 4.5 |
-| **Google Gemini** | Gemini 2.5 Flash (default), 2.5 Pro, 3 Flash Preview |
-| **Ollama** | Any local model (llama3.2, mistral, etc.) |
+### Auto-Sync Settings (v0.3.0+)
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Auto-sync on save | Re-index when files are saved | `true` |
+| Sync on startup | Check for changes at startup | `true` |
+| Scheduled sync | Enable periodic background sync | `false` |
+| Sync interval | Minutes between scheduled syncs | `30` |
+| Debounce delay | Seconds to wait before syncing | `5` |
 
-### Custom Model Names
-
-For each provider, you can enable "Use Custom Model Name" to manually enter any model identifier. This is useful for:
-- Using preview/beta models
-- Using fine-tuned models
-- Future-proofing when new models are released
+### LLM Settings
+Configure your preferred LLM provider for RAG chat:
+- Enter your API key (stored locally, never transmitted except to the provider)
+- Select a model or use custom model name
+- For Ollama, just specify the model name (no API key needed)
 
 ## Usage
 
 ### Search
-
-1. Click the search icon in the left ribbon (or use command: "Open QMD Search")
-2. Enter your query
-3. Select search mode:
-   - **Keyword**: Fast BM25 full-text search
-   - **Semantic**: Vector similarity search
-   - **Hybrid**: Best quality (BM25 + vector + reranking)
+1. Click the magnifying glass icon in the left ribbon
+2. Enter your search query
+3. Select search mode (Keyword / Semantic / Hybrid)
 4. Click a result to open the note
 
 ### RAG Chat
-
 1. Configure an LLM provider in settings
-2. Type a question in the chat input
-3. The plugin will:
-   - Search for relevant documents
-   - Send them as context to the LLM
-   - Display the answer with source citations
+2. Switch to the Chat tab
+3. Ask a question about your notes
+4. View the AI response with clickable source citations
 
 ### Related Documents
-
-When you open a note, the plugin automatically searches for related documents using semantic similarity. This feature can be toggled in settings.
+- Open any note
+- Switch to the "Related" tab in the sidebar
+- See semantically similar documents
 
 ## Keyboard Shortcuts
 
-| Action | Default Shortcut |
-|--------|-----------------|
-| Open QMD Search | (Assign in Hotkeys settings) |
-| Search Selection | (Assign in Hotkeys settings) |
+Assign shortcuts in Settings → Hotkeys:
+- **Open QMD Search**: Open the search sidebar
+- **Search Selection**: Search for selected text
 
 ## Troubleshooting
 
 ### "qmd not found"
-
-1. Verify qmd is installed: `which qmd`
-2. Update the qmd path in settings
-3. Click "Test" to verify
+1. Check if qmd is installed: `which qmd` in terminal
+2. Update the qmd path in settings (e.g., `~/.bun/bin/qmd`)
+3. Click "Test" to verify connection
 
 ### "No results found"
-
-1. Ensure your vault is indexed: `qmd status`
-2. If not, add collection and run embed:
-   ```bash
-   qmd collection add ~/vault --name vault
-   qmd embed
-   ```
+1. Check vault is indexed: `qmd status` in terminal
+2. If not indexed, use "Index Vault" button in settings
+3. For semantic search, ensure embeddings are generated
 
 ### LLM errors
-
 1. Verify your API key is correct
-2. Check your internet connection
-3. For Ollama, ensure the server is running: `ollama serve`
+2. Check internet connection
+3. For Ollama: ensure server is running (`ollama serve`)
+
+### Auto-sync not working
+1. Check that auto-sync is enabled in settings
+2. Verify qmd path is correct
+3. Check the console for error messages (Ctrl/Cmd + Shift + I)
+
+## Changelog
+
+### v0.3.0
+- ✨ **Auto-Sync**: Automatic re-indexing on file save, startup, and scheduled intervals
+- 🔧 Smart debouncing to batch rapid changes
+- 📊 Sync status display in settings
+
+### v0.2.0
+- ✨ **One-Click Setup**: Install qmd, index vault, generate embeddings from settings
+- 🎨 Improved settings UI
+
+### v0.1.0
+- 🎉 Initial release
+- Hybrid search (keyword, semantic, hybrid with reranking)
+- RAG chat with multiple LLM providers
+- Related documents feature
 
 ## Development
 
 ```bash
 # Clone the repo
 git clone https://github.com/reallygood83/ragidian.git
+cd ragidian
 
 # Install dependencies
-cd ragidian
 npm install
 
 # Development build (watch mode)
@@ -157,5 +211,5 @@ MIT
 
 ## Credits
 
-- [qmd](https://github.com/tobi/qmd) by Tobi Lutke - The amazing hybrid search engine
-- [Obsidian](https://obsidian.md) - The best knowledge management tool
+- [qmd](https://github.com/tobi/qmd) by Tobi Lutke - The hybrid search engine
+- [Obsidian](https://obsidian.md) - Knowledge management platform

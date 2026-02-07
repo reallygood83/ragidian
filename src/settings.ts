@@ -327,13 +327,15 @@ export class QmdSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('OpenAI API Key')
       .setDesc('Your OpenAI API key')
-      .addText(text => text
-        .setPlaceholder('sk-...')
-        .setValue(this.plugin.settings.openaiApiKey)
-        .onChange(async (value) => {
-          this.plugin.settings.openaiApiKey = value;
-          await this.plugin.saveSettings();
-        }));
+      .addText(text => {
+        text.inputEl.type = 'password';
+        text.setPlaceholder('sk-...')
+          .setValue(this.plugin.settings.openaiApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.openaiApiKey = value;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(containerEl)
       .setName('Use Custom Model Name')
@@ -376,13 +378,15 @@ export class QmdSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Anthropic API Key')
       .setDesc('Your Anthropic API key')
-      .addText(text => text
-        .setPlaceholder('sk-ant-...')
-        .setValue(this.plugin.settings.anthropicApiKey)
-        .onChange(async (value) => {
-          this.plugin.settings.anthropicApiKey = value;
-          await this.plugin.saveSettings();
-        }));
+      .addText(text => {
+        text.inputEl.type = 'password';
+        text.setPlaceholder('sk-ant-...')
+          .setValue(this.plugin.settings.anthropicApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.anthropicApiKey = value;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(containerEl)
       .setName('Use Custom Model Name')
@@ -425,13 +429,15 @@ export class QmdSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Gemini API Key')
       .setDesc('Your Google AI API key (from ai.google.dev)')
-      .addText(text => text
-        .setPlaceholder('AIza...')
-        .setValue(this.plugin.settings.geminiApiKey)
-        .onChange(async (value) => {
-          this.plugin.settings.geminiApiKey = value;
-          await this.plugin.saveSettings();
-        }));
+      .addText(text => {
+        text.inputEl.type = 'password';
+        text.setPlaceholder('AIza...')
+          .setValue(this.plugin.settings.geminiApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.geminiApiKey = value;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(containerEl)
       .setName('Use Custom Model Name')
