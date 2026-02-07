@@ -227,9 +227,13 @@ export class QmdClient {
         console.warn('[QMD]', stderr);
       }
 
-      const parsed = JSON.parse(stdout);
+      const trimmed = stdout.trim();
       
-      // Normalize response format
+      if (!trimmed || trimmed.startsWith('No results') || trimmed === '[]') {
+        return { results: [], query: '', mode: 'search', elapsed: 0 };
+      }
+
+      const parsed = JSON.parse(trimmed);
       return this.normalizeResponse(parsed);
     } catch (e) {
       throw this.handleError(e);
