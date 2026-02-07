@@ -278,40 +278,25 @@ export class QmdClient {
     return `"${arg.replace(/"/g, '\\"')}"`;
   }
 
-  /**
-   * Handle errors
-   */
-  private handleError(e: unknown): QmdError {
-    const error = e as Error & { code?: string; killed?: boolean };
+  private handleError(e: unknown): Error {
+    const error = e as Error & { code?: string; killed?: boolean; stderr?: string };
     
     if (error.code === 'ENOENT') {
-      return {
-        type: 'connection',
-        message: 'qmd not found at the specified path',
-        details: `Path: ${this.qmdPath}`,
-      };
+      return new Error(`qmd not found at: ${this.qmdPath}`);
     }
     
     if (error.killed) {
-      return {
-        type: 'timeout',
-        message: 'Search timed out',
-        details: 'Try a simpler query or reduce result count',
-      };
+      return new Error('Search timed out. Try a simpler query.');
     }
     
     if (error.message?.includes('JSON')) {
-      return {
-        type: 'parse',
-        message: 'Failed to parse qmd response',
-        details: error.message,
-      };
+      return new Error(`Failed to parse qmd response: ${error.message}`);
     }
 
-    return {
-      type: 'unknown',
-      message: error.message || 'Unknown error',
-      details: String(e),
-    };
+    if (error.stderr) {
+      return new Error(error.stderr.trim());
+    }
+
+    return new Error(error.message || 'Unknown error occurred');
   }
 }
