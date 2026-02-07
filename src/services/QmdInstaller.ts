@@ -143,28 +143,27 @@ export class QmdInstaller {
     onProgress({ stage: 'indexing', message: `Indexing ${collectionName}...`, progress: 0 });
 
     try {
-      const checkResult = await execAsync(
-        `"${qmdPath}" collection list --json`,
-        { timeout: 30000 }
-      ).catch(() => ({ stdout: '[]' }));
-
-      const collections = JSON.parse(checkResult.stdout || '[]');
-      const existing = collections.find?.((c: any) => c.name === collectionName);
-
-      if (existing) {
-        onProgress({ stage: 'indexing', message: 'Collection exists, updating...', progress: 30 });
-        await execAsync(
-          `"${qmdPath}" update`,
-          { timeout: 300000 }
-        );
-      } else {
+      // Try to add collection first
+      try {
         await execAsync(
           `"${qmdPath}" collection add "${vaultPath}" --name "${collectionName}"`,
           { timeout: 300000 }
         );
+        onProgress({ stage: 'indexing', message: 'Collection created and indexed', progress: 100 });
+      } catch (addError: any) {
+        // Check if collection already exists
+        const errorMsg = addError?.stderr || addError?.message || String(addError);
+        if (errorMsg.includes('already exists')) {
+          onProgress({ stage: 'indexing', message: 'Collection exists, updating...', progress: 30 });
+          await execAsync(
+            `"${qmdPath}" update`,
+            { timeout: 300000 }
+          );
+          onProgress({ stage: 'indexing', message: 'Index updated', progress: 100 });
+        } else {
+          throw addError;
+        }
       }
-
-      onProgress({ stage: 'indexing', message: 'Indexing complete', progress: 100 });
 
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e);
