@@ -1,6 +1,6 @@
 {
 	"name": "qmd-ragidian",
-	"version": "0.3.6",
+	"version": "0.3.7",
 	"description": "Hybrid search & RAG for Obsidian powered by qmd",
 	"main": "main.js",
 	"type": "module",

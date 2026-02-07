@@ -47,7 +47,7 @@ export const DEFAULT_SETTINGS: QmdSettings = {
 
   defaultSearchMode: 'search',
   defaultLimit: 10,
-  minScore: 0.3,
+  minScore: 0,
 
   enableRelated: true,
   relatedLimit: 5,

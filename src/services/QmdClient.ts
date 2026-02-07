@@ -244,19 +244,23 @@ export class QmdClient {
    * Normalize qmd response to consistent format
    */
   private normalizeResponse(data: any): QmdSearchResult {
-    // qmd returns array directly, or object with results/documents
     const items = Array.isArray(data) ? data : (data.results || data.documents || []);
     
-    const results: QmdResultItem[] = items.map((item: any) => ({
-      docid: item.docid || item.id || '',
-      path: item.path || item.file || '',
-      absolutePath: item.absolutePath || item.absolute_path || item.path || item.file || '',
-      title: item.title || this.extractTitleFromPath(item.path || item.file || ''),
-      score: typeof item.score === 'number' ? item.score : parseFloat(item.score) || 0,
-      snippet: item.snippet || item.content?.substring(0, 200) || '',
-      context: item.context || undefined,
-      collection: item.collection || 'default',
-    }));
+    const results: QmdResultItem[] = items.map((item: any) => {
+      const rawPath = item.path || item.file || '';
+      const cleanPath = this.cleanQmdPath(rawPath);
+      
+      return {
+        docid: item.docid || item.id || '',
+        path: cleanPath,
+        absolutePath: item.absolutePath || item.absolute_path || cleanPath,
+        title: item.title || this.extractTitleFromPath(cleanPath),
+        score: typeof item.score === 'number' ? item.score : parseFloat(item.score) || 0,
+        snippet: item.snippet || item.content?.substring(0, 200) || '',
+        context: item.context || undefined,
+        collection: item.collection || 'default',
+      };
+    });
 
     return {
       results,
@@ -264,6 +268,10 @@ export class QmdClient {
       mode: Array.isArray(data) ? 'search' : (data.mode || 'search'),
       elapsed: Array.isArray(data) ? 0 : (data.elapsed || 0),
     };
+  }
+
+  private cleanQmdPath(path: string): string {
+    return path.replace(/^qmd:\/\/[^/]+\//, '');
   }
 
   /**
