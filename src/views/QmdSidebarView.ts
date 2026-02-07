@@ -318,13 +318,30 @@ export class QmdSidebarView extends ItemView {
     }
   }
 
-  private openDocument(item: QmdResultItem, newTab: boolean): void {
-    const path = item.path;
-    if (newTab) {
-      this.app.workspace.openLinkText(path, '', 'tab');
-    } else {
-      this.app.workspace.openLinkText(path, '', false);
+  private async openDocument(item: QmdResultItem, newTab: boolean): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(item.path);
+    
+    if (file instanceof TFile) {
+      const leaf = newTab 
+        ? this.app.workspace.getLeaf('tab')
+        : this.app.workspace.getLeaf(false);
+      await leaf.openFile(file);
+      return;
     }
+    
+    const pathWithExt = item.path.endsWith('.md') ? item.path : item.path + '.md';
+    const fileWithExt = this.app.vault.getAbstractFileByPath(pathWithExt);
+    
+    if (fileWithExt instanceof TFile) {
+      const leaf = newTab 
+        ? this.app.workspace.getLeaf('tab')
+        : this.app.workspace.getLeaf(false);
+      await leaf.openFile(fileWithExt);
+      return;
+    }
+    
+    console.warn('[QMD] File not found:', item.path);
+    this.app.workspace.openLinkText(item.path, '', newTab ? 'tab' : false);
   }
 
   async updateRelatedDocuments(file: TFile): Promise<void> {

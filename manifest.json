@@ -1,7 +1,7 @@
 {
 	"id": "qmd-ragidian",
 	"name": "QMD RAGidian",
-	"version": "0.3.7",
+	"version": "0.3.8",
 	"minAppVersion": "1.4.0",
 	"description": "Hybrid search & RAG for Obsidian powered by qmd - BM25, vector search, and LLM reranking",
 	"author": "Moon",
