@@ -55,13 +55,111 @@ export class QmdClient {
 
   /**
    * Get index status and collections
+   * Note: qmd status doesn't support --json, so we parse plain text output
    */
   async status(): Promise<QmdStatus> {
     const { stdout } = await execAsync(
-      `${this.qmdPath} status --json`,
+      `${this.qmdPath} status`,
       { maxBuffer: 1024 * 1024 }
     );
-    return JSON.parse(stdout);
+    return this.parseStatusOutput(stdout);
+  }
+
+  /**
+   * Parse plain text output from qmd status command
+   */
+  private parseStatusOutput(output: string): QmdStatus {
+    const lines = output.split('\n');
+    
+    let indexPath = '';
+    let totalDocuments = 0;
+    let totalEmbeddings = 0;
+    const collections: Array<{
+      name: string;
+      path: string;
+      mask: string;
+      fileCount: number;
+      embeddingCount: number;
+      lastUpdated: string;
+    }> = [];
+
+    let currentCollection: {
+      name: string;
+      path: string;
+      mask: string;
+      fileCount: number;
+      embeddingCount: number;
+      lastUpdated: string;
+    } | null = null;
+
+    for (const line of lines) {
+      // Parse index path: "Index: /path/to/index.sqlite"
+      const indexMatch = line.match(/^Index:\s+(.+)$/);
+      if (indexMatch) {
+        indexPath = indexMatch[1].trim();
+        continue;
+      }
+
+      // Parse total documents: "  Total:    1293 files indexed"
+      const docsMatch = line.match(/Total:\s+(\d+)\s+files/);
+      if (docsMatch) {
+        totalDocuments = parseInt(docsMatch[1], 10);
+        continue;
+      }
+
+      // Parse vectors/embeddings: "  Vectors:  11203 embedded"
+      const vectorsMatch = line.match(/Vectors:\s+(\d+)\s+embedded/);
+      if (vectorsMatch) {
+        totalEmbeddings = parseInt(vectorsMatch[1], 10);
+        continue;
+      }
+
+      // Parse collection header: "  CollectionName (qmd://CollectionName/)"
+      const collectionMatch = line.match(/^\s+(\S+)\s+\(qmd:\/\/([^/]+)\/\)/);
+      if (collectionMatch) {
+        if (currentCollection) {
+          collections.push(currentCollection);
+        }
+        currentCollection = {
+          name: collectionMatch[1],
+          path: `qmd://${collectionMatch[2]}/`,
+          mask: '',
+          fileCount: 0,
+          embeddingCount: 0,
+          lastUpdated: '',
+        };
+        continue;
+      }
+
+      // Parse collection pattern: "    Pattern:  **/*.md"
+      if (currentCollection) {
+        const patternMatch = line.match(/Pattern:\s+(.+)$/);
+        if (patternMatch) {
+          currentCollection.mask = patternMatch[1].trim();
+          continue;
+        }
+
+        // Parse collection files: "    Files:    1293 (updated 8m ago)"
+        const filesMatch = line.match(/Files:\s+(\d+)(?:\s+\(updated\s+([^)]+)\))?/);
+        if (filesMatch) {
+          currentCollection.fileCount = parseInt(filesMatch[1], 10);
+          currentCollection.lastUpdated = filesMatch[2] || '';
+        }
+      }
+    }
+
+    // Add last collection if exists
+    if (currentCollection) {
+      collections.push(currentCollection);
+    }
+
+    return {
+      indexPath,
+      collections,
+      totalDocuments,
+      totalEmbeddings,
+      modelsLoaded: true, // Assume loaded if status runs successfully
+    };
   }
 
   /**
