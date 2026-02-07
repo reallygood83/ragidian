@@ -45,9 +45,9 @@ export const DEFAULT_SETTINGS: QmdSettings = {
   syncMode: 'on-startup',
   syncIntervalMinutes: 10,
 
-  defaultSearchMode: 'vsearch',
-  defaultLimit: 50,
-  minScore: 0.5,
+  defaultSearchMode: 'search',
+  defaultLimit: 20,
+  minScore: 0,
 
   enableRelated: true,
   relatedLimit: 5,
